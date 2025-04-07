@@ -1,42 +1,52 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, UploadFile, File
+from YOLO import YOLO_Satellite_Detection
+import io
 
 app = FastAPI()
+model = YOLO_Satellite_Detection()
+loaded_model = None
 
 @app.get("/")
 def read_root():
     return {"message": "FastAPI in Docker is running!"}
 
 @app.post("/inference/")
-def inference(image: str, sequenceID: int, sequenceLength: int):
-    
+def inference(image: list, sequenceID: int, sequenceLength: int):
+    global model
+    results = model.inference(image, sequenceID, sequenceLength)
     return results
 
 @app.post("/train/")
-def train(image: str, sequenceID: int, sequenceLength: int):
-    decoded_image = base64.b64decode(image)  # Decode base64 image
+def train(epochs:int,imgsz:int,batch:float):
+    global model
+    model.train( epochs=1000, imgsz=1200, batch=0.7)
     return {
-        "sequenceID": sequenceID,
-        "sequenceLength": sequenceLength,
-        "message": "Image processed successfully"
+        "message": "Model Trained successfully"
     }
 
 @app.post("/save/")
-def save(image: str, sequenceID: int, sequenceLength: int):
-    decoded_image = base64.b64decode(image)  # Decode base64 image
-    return {
-        "message": "Model saved successfully"
-    }
+def save(model_name:str):
+    global model
+    saved_response = model.save(model_name)
+    return saved_response
 
 @app.post("/load/")
-def load(image: str, sequenceID: int, sequenceLength: int):
-    decoded_image = base64.b64decode(image)  # Decode base64 image
-    return {
-        "message": "Model loaded successfully"
-    }
+async def upload_model(model_file_pt: UploadFile = File(...)):
+    global model
+    global loaded_model
+    global model
+    
+    # Read the uploaded file into memory
+    contents = await model_file_pt.read()
+    buffer = io.BytesIO(contents)
+    status = model.load(buffer)
+
+    return status
 
 @app.post("/new/")
-def new(image: str, sequenceID: int, sequenceLength: int):
-    decoded_image = base64.b64decode(image)  # Decode base64 image
+def new(size: str="m"):
+    global model
+    model.new_model(size)
     return {
-        "message": "Model loaded successfully"
+        "message": "Fresh model created successfully"
     }
