@@ -1,6 +1,7 @@
 from fastapi import FastAPI, UploadFile, File
 from YOLO import YOLO_Satellite_Detection
 import io
+from typing import List
 
 app = FastAPI()
 model = YOLO_Satellite_Detection()
@@ -11,9 +12,9 @@ def read_root():
     return {"message": "FastAPI in Docker is running!"}
 
 @app.post("/inference/")
-def inference(image: list, sequenceID: int, sequenceLength: int):
+async def upload_files(images: List[UploadFile] = File(...),  sequenceID: int=1, sequenceLength: int=1):
     global model
-    results = model.inference(image, sequenceID, sequenceLength)
+    results = model.inference(images, sequenceID, sequenceLength)
     return results
 
 @app.post("/train/")
