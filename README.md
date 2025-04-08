@@ -14,12 +14,12 @@ docker run --gpus all -p 30501:30501 satdetection
 
 Once your container is running, you can test API endpoints at http://0.0.0.0:30501/docs and use them as a template for standard usage. This container has implemented the following commands:
 
-/gpu/ - Shows access to GPU for usage in training and inference
-/inference/ - Inferences images based upon json input
-/train/ - Not implemented
-/save/ - Saves the current model and returns it to user
-/load/ - Loads a .pt pytorch model file for inference
-/new/ - Creates a new base instance of a pytorch model.  
+- /gpu/ - Shows access to GPU for usage in training and inference
+- /inference/ - Inferences images based upon json input
+- /train/ - Not implemented
+- /save/ - Saves the current model and returns it to user
+- /load/ - Loads a .pt pytorch model file for inference
+- /new/ - Creates a new base instance of a pytorch model.  
 
 ## Training
 In order to perform training (to avoid poor performance and connection issues) please mount your training data using the command (training is not yet supported)
