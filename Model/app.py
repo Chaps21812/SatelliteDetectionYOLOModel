@@ -1,7 +1,7 @@
 from fastapi import FastAPI, UploadFile, File
 from YOLO import YOLO_Satellite_Detection
 import io
-from typing import List
+import json
 
 app = FastAPI()
 model = YOLO_Satellite_Detection()
@@ -11,10 +11,19 @@ loaded_model = None
 def read_root():
     return {"message": "FastAPI in Docker is running!"}
 
-@app.post("/inference/")
-async def upload_files(images: List[UploadFile] = File(...),  sequenceID: int=1, sequenceLength: int=1):
+@app.get("/gpu/")
+def read_gpu():
     global model
-    results = model.inference(images, sequenceID, sequenceLength)
+    return model.check_cuda()
+
+@app.post("/inference/")
+async def upload_files(file: UploadFile = File(...),  sequenceID: int=1, sequenceLength: int=1):
+    global model
+    contents = await file.read()  # read as bytes
+    text = contents.decode("utf-8")
+    images = json.loads(text)
+
+    results = await model.inference(images, sequenceID, sequenceLength)
     return results
 
 @app.post("/train/")
