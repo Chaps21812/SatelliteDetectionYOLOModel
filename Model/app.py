@@ -8,6 +8,8 @@ class FitsFile(BaseModel):
 
 app = FastAPI()
 model = YOLO_Satellite_Detection()
+model.load_local()
+
 loaded_model = None
 
 @app.get("/")
@@ -18,6 +20,11 @@ def read_root():
 def read_gpu():
     global model
     return model.check_cuda()
+
+@app.get("/load_local/")
+def read_local():
+    global model
+    return model.load_local()
 
 @app.post("/inference/")
 async def upload_files(data: List[FitsFile], sequenceId=None, imageSetId=None, sequenceCount=None, imageSetLength=None):
