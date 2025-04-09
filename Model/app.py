@@ -1,7 +1,10 @@
 from fastapi import FastAPI, UploadFile, File
 from YOLO import YOLO_Satellite_Detection
 import io
-import json
+from typing import List
+from pydantic import BaseModel
+class FitsFile(BaseModel):
+    file: str
 
 app = FastAPI()
 model = YOLO_Satellite_Detection()
@@ -17,13 +20,10 @@ def read_gpu():
     return model.check_cuda()
 
 @app.post("/inference/")
-async def upload_files(file: UploadFile = File(...),  sequenceID: int=1, sequenceLength: int=1):
+async def upload_files(data: List[FitsFile], sequenceId=None, imageSetId=None, sequenceCount=None, imageSetLength=None):
     global model
-    contents = await file.read()  # read as bytes
-    text = contents.decode("utf-8")
-    images = json.loads(text)
-
-    results = await model.inference(images, sequenceID, sequenceLength)
+    results = await model.inference(data, sequenceId, imageSetId, sequenceCount, imageSetLength)
+    print("Im done")
     return results
 
 @app.post("/train/")
