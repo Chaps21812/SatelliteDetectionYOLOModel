@@ -1,0 +1,66 @@
+[project]
+name = "satellitedetectionyolomodel"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "astropy>=6.1.7",
+    "fastapi>=0.115.12",
+    "numpy>=2.1.1",
+    "opencv-python-headless>=4.11.0.86",
+    "pydantic>=2.11.3",
+    "pydantic-settings>=2.8.1",
+    "python-multipart>=0.0.20",
+    "torch>=2.6.0",
+    "ultralytics>=8.3.106",
+    "uvicorn>=0.34.0",
+]
+
+[dependency-groups]
+dev = [
+    "deptry>=0.23.0",
+    "mypy>=1.15.0",
+    "pre-commit>=4.2.0",
+    "pytest>=8.3.5",
+    "ruff>=0.11.4",
+    "uv>=0.6.14",
+]
+
+
+[tool.deptry]
+exclude = [
+    "tests",
+    ".venv",
+]
+known_first_party = ["Model"]
+no_ansi=true
+
+[tool.deptry.per_rule_ignores]
+DEP002 = [
+    # dependencies for serving
+    "python-multipart",
+    "uvicorn"
+]
+
+[tool.mypy]
+plugins = ["numpy.typing.mypy_plugin"]
+
+files = ['Model', 'tests', 'app.py', 'main.py']
+disallow_untyped_defs = true
+disallow_any_unimported = true
+no_implicit_optional = true
+check_untyped_defs = true
+warn_return_any = true
+warn_unused_ignores = true
+show_error_codes = true
+exclude = []
+
+[[tool.mypy.overrides]]
+
+module = [
+  "ultralytics.*",
+  "astropy.*",
+]
+ignore_missing_imports = true
+disallow_any_unimported = false

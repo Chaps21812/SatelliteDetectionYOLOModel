@@ -1,0 +1,5 @@
+**/**/*.pt
+
+.env
+tests/data/
+!tests/data/__init__.py
