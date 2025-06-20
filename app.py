@@ -22,8 +22,6 @@ async def upload_files(
 ) -> List[ObjectDetections]:
     global model
     global logger
-    result = model.check_cuda()
-    logger.info(result["message"])
     logger.info(f"Recieved {len(data)} images")
     logger.info(f"Peforming inference...")
     results = await model.inference(data)
