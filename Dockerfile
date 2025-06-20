@@ -1,4 +1,10 @@
-ARG BASE_REGISTRY=nexus-registry.dso-prod.machina.space
+# Machina production image
+# ARG BASE_REGISTRY=nexus-registry.dso-prod.machina.space
+# ARG BASE_IMAGE=ironbank/nextgen-federal/mistk/mistk-python
+# ARG BASE_TAG=1.2.0-3.11.8
+
+#Temporary production image
+ARG BASE_REGISTRY=registry1.dso.mil
 ARG BASE_IMAGE=ironbank/nextgen-federal/mistk/mistk-python
 ARG BASE_TAG=1.2.0-3.11.8
 
@@ -7,6 +13,7 @@ FROM ${BASE_REGISTRY}/${BASE_IMAGE}:${BASE_TAG}
 USER 0
 
 RUN yum install mesa-libGL -y
+RUN pip install numpy
 
 
 ARG NEXUS_USER
@@ -28,7 +35,8 @@ RUN uv sync --no-cache --frozen --no-dev --no-install-project \
 USER 1001
 
 COPY ./Model /app/Model
-COPY app.py main.py /app
+COPY main.py /app
+COPY app.py /app
 
 EXPOSE ${PORT}
 
