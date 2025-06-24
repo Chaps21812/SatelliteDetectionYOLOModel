@@ -32,7 +32,7 @@ class YOLO_Satellite_Detection:
         logger.info(f"Cuda Available: {torch.cuda.is_available()}")
 
     async def inference(
-        self, data: list[entities.FitsFile]
+        self, data: list[str]
     ) -> list[entities.ObjectDetections]:
         if self.model is None:
             logger.error("No model loaded")
