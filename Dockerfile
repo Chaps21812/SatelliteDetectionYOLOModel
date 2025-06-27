@@ -32,8 +32,6 @@ RUN uv sync --no-cache --frozen --no-dev --no-install-project \
 
 USER 1001
 
-RUN pip install --no-cache-dir ultralytics 
-
 COPY ./Model /app/Model
 COPY main.py /app
 COPY app.py /app
