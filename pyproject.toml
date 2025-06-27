@@ -13,7 +13,6 @@ dependencies = [
     "pydantic-settings>=2.8.1",
     "python-multipart>=0.0.20",
     "torch>=2.6.0",
-    "ultralytics>=8.3.106",
     "uvicorn>=0.34.0",
 ]
 
@@ -59,7 +58,6 @@ exclude = []
 [[tool.mypy.overrides]]
 
 module = [
-  "ultralytics.*",
   "astropy.*",
 ]
 ignore_missing_imports = true
