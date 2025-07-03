@@ -1,0 +1,94 @@
+repos:
+- hooks:
+  - id: commitizen
+    stages:
+    - commit-msg
+  - id: commitizen-branch
+    stages:
+    - manual
+  repo: https://github.com/commitizen-tools/commitizen
+  rev: v4.5.1
+- repo: https://github.com/pre-commit/mirrors-mypy
+  rev: v1.15.0
+  hooks:
+  - id: mypy
+    language: system
+    args: []
+    pass_filenames: true
+    exclude: |
+      (?x)^(
+      examples/|
+      notebooks/
+      )
+- repo: https://github.com/pre-commit/pre-commit-hooks
+  rev: v5.0.0
+  hooks:
+  - id: check-added-large-files
+    exclude: |
+      (?x)^(
+      .+?\.fits |
+      tests/.+?/cassettes/.+?\.yaml
+      )
+  - id: check-json
+    exclude: |
+      (?x)^(
+      \.vscode
+      )
+  - id: check-toml
+  - id: check-yaml
+    exclude: |
+      (?x)^(
+      \.gitlab/ci/|
+      \.gitlab-ci\.yml
+      )
+  - id: debug-statements
+  - id: end-of-file-fixer
+  - id: mixed-line-ending
+    args: ["--fix=lf"]
+  - id: trailing-whitespace
+- repo: https://github.com/astral-sh/ruff-pre-commit
+  # Ruff version.
+  rev: v0.11.4
+  hooks:
+  # Run the linter.
+  - id: ruff
+    args: [ --fix ]
+  # Run the formatter.
+  - id: ruff-format
+
+- repo: https://github.com/executablebooks/mdformat
+  rev: 0.7.22
+  hooks:
+  - id: mdformat
+    additional_dependencies:
+    - mdformat-gfm
+    - mdformat-myst
+
+- repo: https://github.com/fpgmaas/deptry.git
+  rev: 0.23.0
+  hooks:
+    - id: deptry
+      args: ["--config", "pyproject.toml"]
+
+- repo: https://github.com/gitleaks/gitleaks
+  rev: v8.24.2
+  hooks:
+    - id: gitleaks
+
+- repo: https://github.com/astral-sh/uv-pre-commit
+  # uv version.
+  rev: 0.6.14
+  hooks:
+    # Compile requirements
+    - id: uv-export
+      name: export uv requirements
+      args: [-o, requirements.txt, --no-hashes, -q, --all-extras, --no-dev]
+    - id: uv-export
+      name: export uv dev requirements
+      args: [-o, requirements-dev.txt, --no-hashes, -q, --only-dev]
+
+exclude: |
+  (?x)^(
+    examples/.dvcstore |
+    \.venv/
+  )
