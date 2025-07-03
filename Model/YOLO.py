@@ -3,8 +3,10 @@ import torch
 import torchvision
 import base64
 from PIL import Image
+import tempfile
 import io
 import numpy as np
+from fastapi.responses import StreamingResponse
 
 class YOLO_Satellite_Detection():
     def __init__(self):
@@ -24,7 +26,7 @@ class YOLO_Satellite_Detection():
         if model_size == "l": self.model = YOLO("yolo11l.pt")
         if model_size == "x": self.model = YOLO("yolo11x.pt")
 
-    def inference(self, data:list) -> list:
+    def inference(self, data:list, sequenceID: int, sequenceLength: int) -> list:
         self.model = self.model.to(self.device)
         self.model = self.model.eval()
 
@@ -61,16 +63,30 @@ class YOLO_Satellite_Detection():
                     "y_min": ymin.cpu().item()/640,
                 }
                 detections.append(detection)
-            single_image_detection = {"detections": detections}
+            single_image_detection = {"detections": detections, "message": "Inference completed successfully "}
             batch_detections.append(single_image_detection)
 
         return batch_detections
     
-    def save(self, save_path:str):
-        self.model.save(save_path)
+    def save(self, save_name:str):
+        # Save model weights and biases (state_dict) to an in-memory buffer
+        buffer = io.BytesIO()
+        torch.save(self.model.model.state_dict(), buffer)
+        buffer.seek(0)
+        return StreamingResponse(buffer, media_type="application/octet-stream", headers={
+        "Content-Disposition": f"attachment; filename={save_name}.pt",
+        "message": "Model saved successfully"
+        })
 
-    def load(self, load_path:str): 
-        self.model = YOLO(load_path)
+    def load(self, load_buffer:io.BytesIO): 
+        try:
+            with tempfile.NamedTemporaryFile(suffix=".pt") as temp_file:
+                temp_file.write(load_buffer.read())
+                temp_file.flush()
+                self.model = YOLO(temp_file.name)
+            return {"message": "Model loaded successfully"}
+        except Exception as e:
+            return {"message": str(e)}
 
 
 if __name__ == "__main__":
