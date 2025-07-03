@@ -26,17 +26,17 @@ class YOLO_Satellite_Detection():
         if model_size == "l": self.model = YOLO("yolo11l.pt")
         if model_size == "x": self.model = YOLO("yolo11x.pt")
 
-    def inference(self, data:list, sequenceID: int, sequenceLength: int) -> list:
+    async def inference(self, data:list, sequenceID: int, sequenceLength: int) -> list:
         self.model = self.model.to(self.device)
         self.model = self.model.eval()
 
         batch_detections = []
         images = []
         for image in data: 
-            detections = []
+            contents = await image.read()
 
-            decoded_image = base64.b64decode(image["file"])  # Decode base64 image 
-            image = Image.open(io.BytesIO(decoded_image))
+            detections = []
+            image = Image.open(io.BytesIO(contents))
             image_torch = torch.tensor(np.array(image), dtype=torch.float32)
             image_torch = torchvision.transforms.Resize(size=(640,640))(image_torch.unsqueeze(0))
             image_torch = image_torch.repeat(3,1,1)
@@ -79,14 +79,11 @@ class YOLO_Satellite_Detection():
         })
 
     def load(self, load_buffer:io.BytesIO): 
-        try:
-            with tempfile.NamedTemporaryFile(suffix=".pt") as temp_file:
-                temp_file.write(load_buffer.read())
-                temp_file.flush()
-                self.model = YOLO(temp_file.name)
-            return {"message": "Model loaded successfully"}
-        except Exception as e:
-            return {"message": str(e)}
+        with tempfile.NamedTemporaryFile(suffix=".pt") as temp_file:
+            temp_file.write(load_buffer.read())
+            temp_file.flush()
+            self.model = YOLO(temp_file.name)
+        return {"message": "Model loaded successfully"}
 
 
 if __name__ == "__main__":
