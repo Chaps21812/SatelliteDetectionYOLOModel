@@ -1,9 +1,9 @@
 import argparse
-from Model.YOLO import YOLO_Satellite_Detection
+from Model.TorchScript import TorchScript_Satellite_Detection
 
 
 def main() -> None:
-    Yolo = YOLO_Satellite_Detection()
+    TorchScript = TorchScript_Satellite_Detection()
 
     parser = argparse.ArgumentParser(description="YOLO Model Trainer and Manager CLI")
 
@@ -31,10 +31,10 @@ def main() -> None:
     args = parser.parse_args()
 
     if args.command == "create":
-        Yolo.new_model(args.model_size)
+        TorchScript.new_model(args.model_size)
 
     elif args.command == "load":
-        Yolo.load(args.model_path)
+        TorchScript.load(args.model_path)
 
 
 if __name__ == "__main__":
