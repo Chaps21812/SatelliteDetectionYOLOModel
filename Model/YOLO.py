@@ -37,6 +37,7 @@ class YOLO_Satellite_Detection:
         if self.model is None:
             logger.error("No model loaded")
         assert self.model is not None
+        logger.info(f"Length of inference request: {len(data)}")
         self.model = self.model.to(self.device)
         self.model = self.model.eval()
 
@@ -92,6 +93,7 @@ class YOLO_Satellite_Detection:
                     }
                     detections.append(detection)
             batch_detections[orig_i]["detections"] = detections
+            logger.info(f"Length of detections: {len(batch_detections)}")
         return pydantic.TypeAdapter(list[entities.ObjectDetections]).validate_python(
             batch_detections
         )
