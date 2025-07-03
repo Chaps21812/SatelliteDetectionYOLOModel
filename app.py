@@ -16,9 +16,21 @@ model = YOLO_Satellite_Detection()
 def read_root() -> dict[str, str]:
     return {"message": "FastAPI in Docker is running!"}
 
+@app.post("/inference")
+async def upload_files(
+    data: List[str],
+) -> List[ObjectDetections]:
+    global model
+    global logger
+    logger.info(f"Recieved {len(data)} images")
+    logger.info(f"Peforming inference...")
+    results = await model.inference(data)
+    logger.info(f"Inference Complete: ")
+    return results
+
 @app.post("/inference/")
 async def upload_files(
-    data: List[FitsFile],
+    data: List[str],
 ) -> List[ObjectDetections]:
     global model
     global logger
