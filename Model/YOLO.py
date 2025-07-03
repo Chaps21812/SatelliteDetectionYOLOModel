@@ -7,6 +7,7 @@ import tempfile
 import io
 import numpy as np
 from fastapi.responses import StreamingResponse
+from astropy.io import fits
 
 class YOLO_Satellite_Detection():
     def __init__(self):
@@ -15,6 +16,11 @@ class YOLO_Satellite_Detection():
 
         print(f"Model is using: {self.device}")
         print("Cuda Available:", torch.cuda.is_available())
+
+    def check_cuda(self):
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        return {"message": f"Model is using: {self.device} \n Cuda Available:{torch.cuda.is_available()}"}
+
 
     def train(self, epochs=1000, imgsz=1200, batch=0.7):
         self.model.train(data=self.data_path+"/data.yaml", epochs=epochs,imgsz=imgsz,batch=batch)
@@ -32,15 +38,23 @@ class YOLO_Satellite_Detection():
 
         batch_detections = []
         images = []
-        for image in data: 
-            contents = await image.read()
+
+        for file in data:
+            decoded = base64.b64decode(file["file"])
+            tempfits = fits.open(io.BytesIO(decoded))
+            fitfile = tempfits[0]
+            header = fitfile.header
+            data = fitfile.data
+            if header["TRKMODE"]=="sidereal":
+                continue
 
             detections = []
-            image = Image.open(io.BytesIO(contents))
-            image_torch = torch.tensor(np.array(image), dtype=torch.float32)
+            arr_float = data.astype(np.float32)/65535
+            image_torch = torch.from_numpy(arr_float)
             image_torch = torchvision.transforms.Resize(size=(640,640))(image_torch.unsqueeze(0))
             image_torch = image_torch.repeat(3,1,1)
             images.append(image_torch)
+
         batch = torch.stack(images)
         temp_results = self.model.predict(batch)
         for k,result in enumerate(temp_results):
@@ -63,7 +77,7 @@ class YOLO_Satellite_Detection():
                     "y_min": ymin.cpu().item()/640,
                 }
                 detections.append(detection)
-            single_image_detection = {"detections": detections, "message": "Inference completed successfully "}
+            single_image_detection = {"detections": detections}
             batch_detections.append(single_image_detection)
 
         return batch_detections
@@ -71,7 +85,7 @@ class YOLO_Satellite_Detection():
     def save(self, save_name:str):
         # Save model weights and biases (state_dict) to an in-memory buffer
         buffer = io.BytesIO()
-        torch.save(self.model.model.state_dict(), buffer)
+        torch.save(self.model, buffer)
         buffer.seek(0)
         return StreamingResponse(buffer, media_type="application/octet-stream", headers={
         "Content-Disposition": f"attachment; filename={save_name}.pt",

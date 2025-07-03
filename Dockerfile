@@ -12,6 +12,7 @@ EXPOSE 30501
 
 RUN pip install --no-cache-dir numpy==1.26.2 && \
 # pip install --no-cache-dir sympy==1.13.0 && \ 
+pip install --no-cache-dir astropy && \
 pip install --no-cache-dir pillow==10.3.0 && \
 pip install --no-cache-dir typing_extensions==4.12.2 && \
 pip install --no-cache-dir fastapi[standard] && \ 
