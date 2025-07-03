@@ -47,13 +47,17 @@ class YOLO_Satellite_Detection:
         sidereal_detections = 0
         images = []
         rate_indices = []
+        x_resolutions = []
+        y_resolutions = []
 
         for i, file in enumerate(data):
-            decoded = base64.b64decode(file.file)
+            decoded = base64.b64decode(file["file"])
             tempfits = fits.open(io.BytesIO(decoded))
             fitfile = tempfits[0]
             header = fitfile.header
             img_data = fitfile.data
+            y_resolutions.append(img_data.shape[0])
+            x_resolutions.append(img_data.shape[1])
             if header["TRKMODE"] == "sidereal":
                 sidereal_detections += 1
                 continue
@@ -68,6 +72,8 @@ class YOLO_Satellite_Detection:
         for k, (orig_i, result) in enumerate(zip(rate_indices, temp_results)):
             boxes = result.boxes  # Bounding box object
             detections = []
+            x_resolutions[k]
+            y_resolutions[k]
 
             if boxes is not None:
                 for b in range(cast(int, boxes.xyxy.shape[0])):
@@ -81,15 +87,15 @@ class YOLO_Satellite_Detection:
                     detection = {
                         "class_id": int(class_id.cpu().item()),
                         "pixel_centroid": [
-                            float((xmax.cpu().item() + xmin.cpu().item()) / 2),
-                            float((ymax.cpu().item() + ymin.cpu().item()) / 2),
+                            float((xmax.cpu().item() + xmin.cpu().item()) / 2)/x_resolutions[k],
+                            float((ymax.cpu().item() + ymin.cpu().item()) / 2)/y_resolutions[k],
                         ],
                         "prob": float(confidence.cpu().item()),
                         "snr": float(signal / noise),
-                        "x_max": float(xmax.cpu().item()),
-                        "x_min": float(xmin.cpu().item()),
-                        "y_max": float(ymax.cpu().item()),
-                        "y_min": float(ymin.cpu().item()),
+                        "x_max": float(xmax.cpu().item())/x_resolutions[k],
+                        "x_min": float(xmin.cpu().item())/x_resolutions[k],
+                        "y_max": float(ymax.cpu().item())/y_resolutions[k],
+                        "y_min": float(ymin.cpu().item())/y_resolutions[k],
                     }
                     detections.append(detection)
             batch_detections[orig_i]["detections"] = detections

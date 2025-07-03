@@ -3,6 +3,7 @@ from fastapi.responses import StreamingResponse
 from Model.YOLO import YOLO_Satellite_Detection
 from Model.entities import ObjectDetections, FitsFile
 import logging
+import json
 
 from typing import List
 
@@ -18,24 +19,26 @@ def read_root() -> dict[str, str]:
 
 @app.post("/inference")
 async def upload_files(
-    data: List[str],
+    data: List[str | FitsFile],
 ) -> List[ObjectDetections]:
     global model
     global logger
     logger.info(f"Recieved {len(data)} images")
     logger.info(f"Peforming inference...")
+    data = [FitsFile(**json.loads(obj)) if isinstance(obj, str) else obj for obj in data]
     results = await model.inference(data)
     logger.info(f"Inference Complete: ")
     return results
 
 @app.post("/inference/")
 async def upload_files(
-    data: List[str],
+    data: List[str | FitsFile],
 ) -> List[ObjectDetections]:
     global model
     global logger
     logger.info(f"Recieved {len(data)} images")
     logger.info(f"Peforming inference...")
+    data = [json.loads(obj) if isinstance(obj, str) else obj for obj in data]
     results = await model.inference(data)
     logger.info(f"Inference Complete: ")
     return results
