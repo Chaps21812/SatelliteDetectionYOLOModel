@@ -7,7 +7,10 @@ Docker Image is based upon the Iron Bank [CUDA+Pytorch](https://repo1.dso.mil/ds
 In order to perform standard inference and model loading, you can simply use the command
 
 '''
-
+#Without GPU support
+docker run -p 30501:30501 satdetection
+#With GPU support
+docker run --gpus all -p 30501:30501 satdetection
 '''
 
 

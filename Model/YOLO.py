@@ -21,7 +21,6 @@ class YOLO_Satellite_Detection():
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         return {"message": f"Model is using: {self.device} \n Cuda Available:{torch.cuda.is_available()}"}
 
-
     def train(self, epochs=1000, imgsz=1200, batch=0.7):
         self.model.train(data=self.data_path+"/data.yaml", epochs=epochs,imgsz=imgsz,batch=batch)
         
@@ -83,10 +82,12 @@ class YOLO_Satellite_Detection():
         return batch_detections
     
     def save(self, save_name:str):
+        self.model = self.model.to('cpu')
         # Save model weights and biases (state_dict) to an in-memory buffer
         buffer = io.BytesIO()
         torch.save(self.model, buffer)
         buffer.seek(0)
+        self.model = self.model.to(self.device)
         return StreamingResponse(buffer, media_type="application/octet-stream", headers={
         "Content-Disposition": f"attachment; filename={save_name}.pt",
         "message": "Model saved successfully"
