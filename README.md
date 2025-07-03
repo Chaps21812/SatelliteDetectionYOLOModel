@@ -3,6 +3,15 @@ Satellite Detection code for a containerized YOLO model to detect satellites
 
 Docker Image is based upon the Iron Bank [CUDA+Pytorch](https://repo1.dso.mil/dsop/nextgen-federal/mistk/mistk-python-cuda-pytorch) image. If you are going to build this image, please sign into your account at [Registry1](https://registry1.dso.mil/account/sign-in?redirect_url=%2Fharbor%2Fprojects) through the docker CLI. This will allow you to build the image
 
+## Loading Model
+Option 1: You can use the FASTApi file upload to upload your best model for inference
+Option 2: You can use the cli to upload models. First copy the path to your modal
+
+```
+docker cp /path/to/your/model.pt <container_id>:/home/python/Model/model.pt
+```
+Then call the http load_local function to quickly load a new model. 
+
 ## Inference
 In order to perform standard inference and model loading, you can simply use the command
 ```

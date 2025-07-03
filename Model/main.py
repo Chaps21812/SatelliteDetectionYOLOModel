@@ -26,9 +26,6 @@ def main():
 
     if args.command == "create":
         Yolo.new_model(args.model_size)
-    
-    elif args.command == "save":
-        Yolo.save(args.model_name)
         
     elif args.command == "load":
         Yolo.load(args.model_path)
@@ -36,6 +33,3 @@ def main():
 if __name__ == "__main__":
     main()
 
-
-if __name__ == "__main__":
-    main()

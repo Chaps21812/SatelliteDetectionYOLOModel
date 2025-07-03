@@ -100,6 +100,14 @@ class YOLO_Satellite_Detection():
             temp_file.flush()
             self.model = YOLO(temp_file.name)
         return {"message": "Model loaded successfully"}
+    
+    def load_local(self): 
+        try:
+            # Load the model
+            self.model = YOLO("/home/python/Model/model.pt")
+            return {"message": "Model loaded successfully from /home/python/Model/model.pt"}
+        except Exception as e:
+            return {"message": "Error loading model"}
 
     def preprocess_image(self, image:np.ndarray):
         # Apply zscale to the image data for contrast enhancement
