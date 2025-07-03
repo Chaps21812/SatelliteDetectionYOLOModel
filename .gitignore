@@ -3,3 +3,4 @@
 .env
 tests/data/
 !tests/data/__init__.py
+build-and-kind-load.sh

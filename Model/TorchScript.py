@@ -2,18 +2,19 @@ from typing import Any, cast
 import pydantic
 import torch
 import base64
-from astropy.visualization import ZScaleInterval
 import io
 import numpy as np
 from fastapi.responses import StreamingResponse
 from astropy.io import fits
-import cv2
 from . import entities
 from .settings import settings
+from .preprocess import preprocess_image, channel_mixture_C
 from . import weights
 from importlib import resources
 
+import torchvision
 from numpy import typing as npt
+import numpy as np
 import pathlib
 
 import logging
@@ -61,7 +62,7 @@ class TorchScript_Satellite_Detection:
                 sidereal_detections += 1
                 continue
 
-            arr_float = self.preprocess_image(img_data)  # Expects [C, H, W] float32
+            arr_float = channel_mixture_C(img_data)  # Expects [C, H, W] float32
             images.append(arr_float)
             rate_indices.append(i)
 
@@ -129,30 +130,6 @@ class TorchScript_Satellite_Detection:
             logger.info(f"TorchScript model loaded successfully from {p}.")
         except Exception as e:
             logger.error(f"Error loading TorchScript model: {type(e).__name__} - {e}")
-
-
-    def preprocess_image(self, image: npt.NDArray) -> npt.NDArray:
-        # Apply zscale to the image data for contrast enhancement
-        zscale = ZScaleInterval()
-        vmin, vmax = zscale.get_limits(image)
-
-        # Apply Z-scale normalization (clipping values between vmin and vmax)
-        #image = np.clip(image, vmin, vmax)
-        #image = (image - vmin) / (vmax - vmin) * 255  # Scale to 0-255 range
-        # Convert the image data to an unsigned 8-bit integer (for saving as PNG)
-        
-        image = image.astype(np.float32)
-
-        height, width = image.shape
-        new_height = (
-            (height // 32) * 32 if height % 32 == 0 else ((height // 32) + 1) * 32
-        )
-        new_width = (width // 32) * 32 if width % 32 == 0 else ((width // 32) + 1) * 32
-        #resized_image = cv2.resize(image, (new_width, new_height))
-        resized_image = cv2.resize(image, (512, 512))
-        image = np.stack([resized_image] * 3, axis=0)
-        
-        return image
 
 
 if __name__ == "__main__":
