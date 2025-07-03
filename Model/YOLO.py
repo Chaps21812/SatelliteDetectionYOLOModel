@@ -2,7 +2,7 @@ from ultralytics import YOLO
 import torch
 import torchvision
 import base64
-from PIL import Image
+from astropy.visualization import ZScaleInterval
 import tempfile
 import io
 import numpy as np
@@ -48,13 +48,14 @@ class YOLO_Satellite_Detection():
                 continue
 
             detections = []
-            arr_float = data.astype(np.float32)/65535
+            arr_float = self.preprocess_image(data)
             image_torch = torch.from_numpy(arr_float)
             image_torch = torchvision.transforms.Resize(size=(640,640))(image_torch.unsqueeze(0))
             image_torch = image_torch.repeat(3,1,1)
             images.append(image_torch)
 
         batch = torch.stack(images)
+        batch = batch.to(self.device)
         temp_results = self.model.predict(batch)
         for k,result in enumerate(temp_results):
             boxes = result.boxes  # Bounding box object
@@ -100,6 +101,20 @@ class YOLO_Satellite_Detection():
             self.model = YOLO(temp_file.name)
         return {"message": "Model loaded successfully"}
 
+    def preprocess_image(self, image:np.ndarray):
+        # Apply zscale to the image data for contrast enhancement
+        zscale = ZScaleInterval()
+        vmin, vmax = zscale.get_limits(image)
+        
+        # Apply Z-scale normalization (clipping values between vmin and vmax)
+        image = np.clip(image, vmin, vmax)
+        image = (image - vmin) / (vmax - vmin) * 255  # Scale to 0-255 range
+        
+        # Convert the image data to an unsigned 8-bit integer (for saving as PNG)
+        image = image.astype(np.float32)
+        return image
+            
+            
 
 if __name__ == "__main__":
     model = YOLO_Satellite_Detection()
