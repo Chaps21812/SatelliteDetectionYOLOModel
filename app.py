@@ -1,6 +1,6 @@
 from fastapi import FastAPI, UploadFile, File
 from fastapi.responses import StreamingResponse
-from Model.YOLO import YOLO_Satellite_Detection
+from Model.TorchScript import TorchScript_Satellite_Detection
 from Model.entities import ObjectDetections, FitsFile
 import logging
 import json
@@ -11,7 +11,7 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(
 logger = logging.getLogger(__name__)
 
 app = FastAPI()
-model = YOLO_Satellite_Detection()
+model = TorchScript_Satellite_Detection()
 
 @app.get("/")
 def read_root() -> dict[str, str]:
@@ -44,4 +44,4 @@ async def upload_files(
     return results
 
 if __name__ == "__main__":
-    model = YOLO_Satellite_Detection()
+    model = TorchScript_Satellite_Detection()
