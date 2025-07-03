@@ -13,8 +13,6 @@ FROM ${BASE_REGISTRY}/${BASE_IMAGE}:${BASE_TAG}
 USER 0
 
 RUN yum install mesa-libGL -y
-RUN pip install numpy
-
 
 ARG NEXUS_USER
 ARG NEXUS_TOKEN
@@ -33,6 +31,8 @@ RUN uv sync --no-cache --frozen --no-dev --no-install-project \
     --extra-index-url https://${NEXUS_USER}:${NEXUS_TOKEN}@nexus.dso-prod.machina.space/repository/pypi-all/simple
 
 USER 1001
+
+RUN pip install --no-cache-dir ultralytics 
 
 COPY ./Model /app/Model
 COPY main.py /app
