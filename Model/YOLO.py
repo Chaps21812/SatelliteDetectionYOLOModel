@@ -4,7 +4,6 @@ from ultralytics import YOLO
 import torch
 import base64
 from astropy.visualization import ZScaleInterval
-import tempfile
 import io
 import numpy as np
 from fastapi.responses import StreamingResponse
@@ -18,44 +17,25 @@ from importlib import resources
 from numpy import typing as npt
 import pathlib
 
+import logging
+
+logger = logging.getLogger(__name__)
 
 class YOLO_Satellite_Detection:
     def __init__(self) -> None:
+        global logger
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.model: YOLO | None = None  # type: ignore[no-any-unimported]
         self.data_path = pathlib.Path()
-
-        print(f"Model is using: {self.device}")
-        print("Cuda Available:", torch.cuda.is_available())
-
-    def check_cuda(self) -> dict[str, str]:
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        return {
-            "message": f"Model is using: {self.device} \n Cuda Available:{torch.cuda.is_available()}"
-        }
-
-    def train(self, epochs: int = 1000, imgsz: int = 1200, batch: float = 0.7) -> None:
-        assert self.model is not None
-
-        self.model.train(
-            data=self.data_path / "data.yaml", epochs=epochs, imgsz=imgsz, batch=batch
-        )
-
-    def new_model(self, model_size: str = "m") -> None:
-        if model_size == "n":
-            self.model = YOLO("yolo11n.pt")
-        if model_size == "s":
-            self.model = YOLO("yolo11s.pt")
-        if model_size == "m":
-            self.model = YOLO("yolo11m.pt")
-        if model_size == "l":
-            self.model = YOLO("yolo11l.pt")
-        if model_size == "x":
-            self.model = YOLO("yolo11x.pt")
+        self.load_local()
+        logger.info(f"Model is using: {self.device}")
+        logger.info(f"Cuda Available: {torch.cuda.is_available()}")
 
     async def inference(
         self, data: list[entities.FitsFile]
     ) -> list[entities.ObjectDetections]:
+        if self.model is None:
+            logger.error("No model loaded")
         assert self.model is not None
         self.model = self.model.to(self.device)
         self.model = self.model.eval()
@@ -133,21 +113,14 @@ class YOLO_Satellite_Detection:
             },
         )
 
-    def load(self, load_buffer: io.BytesIO) -> dict[str, str]:
-        with tempfile.NamedTemporaryFile(suffix=".pt") as temp_file:
-            temp_file.write(load_buffer.read())
-            temp_file.flush()
-            self.model = YOLO(temp_file.name)
-        return {"message": "Model loaded successfully"}
-
     def load_local(self) -> dict[str, str]:
         try:
             # Load the model
             p = resources.files(weights) / settings.MODEL_WEIGHTS
             self.model = YOLO(p)
-            return {"message": f"Model loaded successfully from {p}"}
-        except Exception:
-            return {"message": "Error loading model"}
+            logger.info(f"Model loaded successfully from {p}")
+        except Exception as e:
+            logger.error(f"Error loading model: {type(e).__name__} - {e}")
 
     def preprocess_image(self, image: npt.NDArray) -> npt.NDArray:
         # Apply zscale to the image data for contrast enhancement
@@ -174,12 +147,8 @@ class YOLO_Satellite_Detection:
 
 if __name__ == "__main__":
     model = YOLO_Satellite_Detection()
-    model.load_local()
     test_list = []
-    with open(
-        "/mnt/c/Users/david.chaparro/Documents/Repos/SatelliteDetectionYOLOModel/test_image.png",
-        "rb",
-    ) as image_file:
+    with open("/mnt/c/Users/david.chaparro/Documents/Repos/SatelliteDetectionYOLOModel/test_image.png","rb",) as image_file:
         encoded_string = base64.b64encode(image_file.read())
         for i in range(3):
             my_dict = {
