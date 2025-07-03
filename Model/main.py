@@ -1,35 +1,41 @@
-import sys
-import json
+import argparse
 from YOLO import YOLO_Satellite_Detection
 
 
 def main():
-    if len(sys.argv) < 1:
-        print("Usage: python main.py <command>")
-        sys.exit(1)
+    Yolo = YOLO_Satellite_Detection()
 
-    command = sys.argv[1]
-    model = sys.argv[2]
-    secondary = sys.argv[3]
+    parser = argparse.ArgumentParser(description="YOLO Model Trainer and Manager CLI")
+    
+    subparsers = parser.add_subparsers(dest="command", help="Sub-commands")
 
-    Yolo = YOLO_Satellite_Detection("/app/data", model_size=model)
-    if command == "train":
-        if len(sys.argv) > 3:
-            epochs = int(secondary)
-        else:
-            epochs = 10
-        result = Yolo.train(epochs=int(epochs))
-        print("Training complete!")
-    elif command == "eval":
-        print(f"Model location: {secondary}")
-        result = Yolo.evaluate(secondary)
-        print("Evaluation complete!")
-    elif command == "convert":
-        result = Yolo.convert_coco_to_yolo()
-        print("Conversion complete!")
-    else:
-        print("Invalid command. Use 'train', 'eval', or 'convert'.")
-        sys.exit(1)
+    # Sub-command to create a new YOLO model
+    create_parser = subparsers.add_parser("create", help="Create a new YOLO model")
+    create_parser.add_argument("model_size", type=str, help="Name of the model to create (n,s,m,l,x)")
+
+    # Sub-command to save the trained model
+    save_parser = subparsers.add_parser("save", help="Save the trained YOLO model")
+    save_parser.add_argument("model_name", type=str, help="Name of the model to save")
+    save_parser.add_argument("save_location", type=str, help="Path to save the model file")
+
+    # Sub-command to load an existing YOLO model
+    load_parser = subparsers.add_parser("load", help="Load an existing YOLO model")
+    load_parser.add_argument("model_path", type=str, help="Path to the model file to load")
+
+    args = parser.parse_args()
+
+    if args.command == "create":
+        Yolo.new_model(args.model_size)
+    
+    elif args.command == "save":
+        Yolo.save(args.model_name)
+        
+    elif args.command == "load":
+        Yolo.load(args.model_path)
+
+if __name__ == "__main__":
+    main()
+
 
 if __name__ == "__main__":
     main()

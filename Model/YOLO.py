@@ -1,6 +1,5 @@
 from ultralytics import YOLO
 import torch
-import torchvision
 import base64
 from astropy.visualization import ZScaleInterval
 import tempfile
@@ -8,6 +7,7 @@ import io
 import numpy as np
 from fastapi.responses import StreamingResponse
 from astropy.io import fits
+import cv2
 
 class YOLO_Satellite_Detection():
     def __init__(self):
@@ -31,31 +31,30 @@ class YOLO_Satellite_Detection():
         if model_size == "l": self.model = YOLO("yolo11l.pt")
         if model_size == "x": self.model = YOLO("yolo11x.pt")
 
-    async def inference(self, data:list, sequenceID: int, sequenceLength: int) -> list:
+    async def inference(self, data:list, sequenceId=None, imageSetId=None, sequenceCount=None, imageSetLength=None ) -> list:
         self.model = self.model.to(self.device)
         self.model = self.model.eval()
 
         batch_detections = []
+        sidereal_detections = 0
         images = []
 
         for file in data:
-            decoded = base64.b64decode(file["file"])
+            decoded = base64.b64decode(file.file)
             tempfits = fits.open(io.BytesIO(decoded))
             fitfile = tempfits[0]
             header = fitfile.header
             data = fitfile.data
             if header["TRKMODE"]=="sidereal":
+                sidereal_detections += 1
                 continue
 
             detections = []
             arr_float = self.preprocess_image(data)
-            image_torch = torch.from_numpy(arr_float)
-            image_torch = torchvision.transforms.Resize(size=(640,640))(image_torch.unsqueeze(0))
-            image_torch = image_torch.repeat(3,1,1)
-            images.append(image_torch)
+            images.append(arr_float)
 
-        batch = torch.stack(images)
-        batch = batch.to(self.device)
+        images = np.stack(images, axis=0)
+        batch = torch.from_numpy(images).to(self.device)
         temp_results = self.model.predict(batch)
         for k,result in enumerate(temp_results):
             boxes = result.boxes  # Bounding box object
@@ -63,23 +62,24 @@ class YOLO_Satellite_Detection():
                 (xmin, ymin, xmax, ymax) = boxes.xyxy[b,:].cpu()
                 class_id = boxes.cls[b]
                 confidence = boxes.conf[b]
-                signal = batch[k,0,int((xmax-xmin)/2), int((ymax-ymin)/2)]
-                noise = np.std(batch[k,0,:,:].cpu().numpy())
+                signal = images[k,0,int((xmax-xmin)/2), int((ymax-ymin)/2)]
+                noise = np.std(images[k,0,:,:])
                 detection = {
-                    "class_id":class_id.cpu().item(),
-                    "pixel_centroid": [(xmax.cpu().item()-xmin.cpu().item())/2/640, (ymax.cpu().item()-ymin.cpu().item())/2/640],
+                    "class_id":int(class_id.cpu().item()),
+                    "pixel_centroid": [float((xmax.cpu().item()+xmin.cpu().item())/2), float((ymax.cpu().item()+ymin.cpu().item())/2)],
                     "pixel_fwhm":"N/A",
-                    "prob":confidence.cpu().item(),
-                    "snr": (signal/noise).cpu().item(),
-                    "x_max": xmax.cpu().item()/640,
-                    "x_min": xmin.cpu().item()/640,
-                    "y_max": ymax.cpu().item()/640,
-                    "y_min": ymin.cpu().item()/640,
+                    "prob":float(confidence.cpu().item()),
+                    "snr": float(signal/noise),
+                    "x_max": float(xmax.cpu().item()),
+                    "x_min": float(xmin.cpu().item()),
+                    "y_max": float(ymax.cpu().item()),
+                    "y_min": float(ymin.cpu().item()),
                 }
                 detections.append(detection)
             single_image_detection = {"detections": detections}
             batch_detections.append(single_image_detection)
-
+        for i in range(sidereal_detections):
+            batch_detections.append({"detections": []})
         return batch_detections
     
     def save(self, save_name:str):
@@ -112,6 +112,13 @@ class YOLO_Satellite_Detection():
         
         # Convert the image data to an unsigned 8-bit integer (for saving as PNG)
         image = image.astype(np.float32)
+
+        height, width = image.shape
+        new_height = (height // 32) * 32 if height % 32 == 0 else ((height // 32) + 1) * 32
+        new_width = (width // 32) * 32 if width % 32 == 0 else ((width // 32) + 1) * 32
+        resized_image = cv2.resize(image, (new_width, new_height))
+
+        image = np.stack([resized_image] * 3, axis=0)
         return image
             
             
