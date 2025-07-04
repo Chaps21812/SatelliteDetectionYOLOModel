@@ -1,0 +1,4 @@
+[DevSecOps][1] @kbr-machina-project/commons
+.gitlab-ci.yml
+external-requirements.txt
+CODEOWNERS

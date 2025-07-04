@@ -1,0 +1,52 @@
+  variables:
+    #
+    # Custom Developer Variables
+    #
+
+    # Place your variables here for any variables you wish to carry throughout the pipeline
+
+
+
+    #
+    # Pipeline Varibales
+    #
+
+    BUILD_VERSION: 0.0.1
+    ENABLE_AUTO_MERGE: "False"            # If ENABLE_AUTO_MERGE is set to True, the schedule pipeline will automatically attempt to merge your code up to test then to main
+
+    # Unit Test Variables, modfiy these is you have specific args for python unit tests or multiple/different requirements files
+    MIN_PERCENTAGE: 10                                  # Set this to your own standard you wish to enforce (see ENABLE_UNIT_TEST and UNITTEST_DISABLED above)
+    COVERAGE_RUN_ARGS: '--omit="*/test*" -m pytest --junitxml=junit.xml'
+    REQUIREMENTS: "-i https://${NEXUS_USER}:${NEXUS_TOKEN}@nexus.dso-prod.machina.space/repository/pypi-all/simple  -r requirements.txt"
+
+    # Kaniko Variables, modify this if you have additional build-args or configurations needed to build
+    BUILD_ARGS: "--build-arg NEXUS_USER=${NEXUS_USER} --build-arg NEXUS_TOKEN=${NEXUS_TOKEN} --build-arg NEXUS_AUTH=${NEXUS_AUTH}"
+
+    # Documentation/Linting Variables
+    PDF_VERSION: ${BUILD_VERSION}
+    INCLUDE_DIRS: "server"
+    IGNORE_FILES: "* , .*"
+
+    #
+    # CAUTION: Please do not override these without discussing with DevSecOps team, resources are limited and overuse will cause pipeline failures
+    #
+
+    # Defaults
+    # MEMORY: '4Gi'
+    # CPU: "1"
+    # STORAGE: "10Gi"
+
+    # Fortify Resouce Overrides
+    FORTIFY_MEMORY_LIMIT: '20Gi'              # Maps to KUBERNETES_MEMORY_LIMIT in fortify stage.
+    FORTIFY_CPU_LIMIT: "1"                   # Maps to KUBERNETES_CPU_LIMIT in fortify stage
+    FORTIFY_STORAGE_LIMIT: "10Gi"            # Maps to KUBERNETES_EPHEMERAL_STORAGE_LIMIT in fortify stage
+
+    # Unit Test Resouce Overrides
+    UNITTEST_MEMORY_LIMIT: '20Gi'             # Maps to KUBERNETES_MEMORY_LIMIT in unit tests stage
+    UNITTEST_CPU_LIMIT: "3"                  # Maps to KUBERNETES_CPU_LIMIT in unit tests stage
+    UNITTEST_STORAGE_LIMIT: "10Gi"           # Maps to KUBERNETES_EPHEMERAL_STORAGE_LIMIT in unit tests stage
+
+    # Kaniko Build Resouce Overrides
+    KANIKO_MEMORY_LIMIT: '8Gi'               # Maps to KUBERNETES_MEMORY_LIMIT in kaniko build stage
+    KANIKO_CPU_LIMIT: "1"                    # Maps to KUBERNETES_CPU_LIMIT in kaniko build stage
+    KANIKO_STORAGE_LIMIT: "10Gi"             # Maps to KUBERNETES_EPHEMERAL_STORAGE_LIMIT in kaniko build stage

@@ -1,0 +1,42 @@
+include:
+  - project: 'kbr-machina-project/commons/pipeline'
+    ref: kbr-main
+    file:
+      - 'pipeline-templates/default.yaml'
+  - pipeline_vars.yml
+
+unit-test-:
+  extends: .unit-test-python
+  rules:
+#    - !reference [.unit_test_rules, rules]
+    - when: never
+  script:
+    # Install uv
+    - export UV_INDEX_NEXUS_USERNAME=${NEXUS_USER}
+    - export UV_INDEX_NEXUS_PASSWORD=${NEXUS_TOKEN}
+    - python3 -m pip install -i https://${NEXUS_USER}:${NEXUS_TOKEN}@nexus.dso-prod.machina.space/repository/pypi-all/simple --upgrade pip
+    - pip install -i https://${NEXUS_USER}:${NEXUS_TOKEN}@nexus.dso-prod.machina.space/repository/pypi-all/simple uv
+    - exit_code=0
+
+    # Run Unit tests
+    - echo "Coverage Command:\$ coverage run $COVERAGE_RUN_ARGS "
+    - uv run coverage run ${COVERAGE_RUN_ARGS} || exit_code=$?
+    - uv run coverage json -o unit-tests-report.json
+    - uv run coverage report
+    - uv run coverage xml -i -o coverage-report.xml
+
+    # Get coverage
+    - TOTAL_LINES=$(xmllint --xpath "/coverage/@lines-valid" "./coverage-report.xml" | sed 's/[^0-9]*//g')
+    - COVERED_LINES=$(xmllint --xpath "/coverage/@lines-covered" "./coverage-report.xml" | sed 's/[^0-9]*//g')
+    - COVERAGE_PERCENTAGE=$(bc <<< "scale=2; $COVERED_LINES * 100 / ($TOTAL_LINES)")
+    - echo "Coverage percentage $COVERAGE_PERCENTAGE%"
+
+    # Pipeline enforcement for tests and coverage
+    - echo "UNIT_TEST_VERSION=$(uv --version | tr -d '\n\/' | grep -Eo '[0-9].*[0-9]')" >> report.env
+    - if [ "${COVERAGE_PERCENTAGE%.*}" -lt "$MIN_PERCENT" ]; then echo "UNIT_TEST_STATUS=failed" >> report.env; echo "ERROR Coverage not met $COVERAGE_PERCENTAGE is less than $MIN_PERCENT"; exit 222; else echo "UNIT_TEST_STATUS=success" >> report.env; fi
+    - if [ "${exit_code}" -eq "1" ]; then echo "ERROR Detected failing unit tests"; echo "UNIT_TEST_STATUS=failed" >> report.env; exit 222; else echo "UNIT_TEST_STATUS=success" >> report.env; fi
+
+sonarqube-:
+  extends: .sonarqube-python
+  rules:
+    - !reference [.default_rules, rules]
