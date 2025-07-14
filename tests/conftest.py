@@ -1,7 +1,7 @@
 import pydantic
 import pytest
-from Model import entities
-from Model.YOLO import YOLO_Satellite_Detection
+from src.model import entities
+from src.model.TorchScript import TorchScript_Satellite_Detection
 from importlib import resources
 from .data import payloads, responses
 import json
@@ -14,8 +14,8 @@ def anyio_backend() -> str:
 
 
 @pytest.fixture
-def model() -> YOLO_Satellite_Detection:
-    yolo_model = YOLO_Satellite_Detection()
+def model() -> TorchScript_Satellite_Detection:
+    yolo_model = TorchScript_Satellite_Detection()
     yolo_model.load_local()
     return yolo_model
 

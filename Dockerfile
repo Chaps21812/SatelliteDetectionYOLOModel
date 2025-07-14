@@ -43,13 +43,11 @@ RUN uv sync --no-cache --frozen --no-dev --no-install-project \
 
 USER 1001
 
-COPY ./Model /app/Model
-COPY main.py /app
-COPY app.py /app
+COPY ./src /app/src
 
 EXPOSE ${PORT}
 
 ENV PORT=${PORT}
 ENV WORKERS=${WORKERS}
 
-ENTRYPOINT uv run --no-dev uvicorn app:app --host 0.0.0.0 --port ${PORT} --workers=${WORKERS}
+ENTRYPOINT uv run --no-dev uvicorn src.app:app --host 0.0.0.0 --port ${PORT} --workers=${WORKERS}

@@ -1,5 +1,5 @@
-from Model.YOLO import YOLO_Satellite_Detection
-from Model import entities
+from src.model.TorchScript import TorchScript_Satellite_Detection
+from src.model import entities
 import pytest
 
 
@@ -10,7 +10,7 @@ import pytest
 )
 @pytest.mark.anyio
 async def test_inference(
-    model: YOLO_Satellite_Detection, payload_entity: list[entities.FitsFile]
+    model: TorchScript_Satellite_Detection, payload_entity: list[entities.FitsFile]
 ) -> None:
     detections = await model.inference(payload_entity)
     assert len(detections) == len(payload_entity)
